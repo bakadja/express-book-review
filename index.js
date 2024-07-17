@@ -15,11 +15,11 @@ app.use("/customer",
             secret: process.env.SESSION_SECRET,
             resave: true, 
             saveUninitialized: true,
-            cookie: { 
-                secure: true,
-                httpOnly: true,
-                maxAge: 3600000
-             }
+            // cookie: { 
+            //     secure: true,
+            //     httpOnly: true,
+            //     maxAge: 3600000
+            //  }
         }))
 
         //authentification mechanism to check if user hat a valid token
