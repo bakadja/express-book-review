@@ -14,7 +14,7 @@ const authenticatedUser = (username,password)=>{
 const reviewService = {
   addOrUpdateReview: async(isbn, username, review) => {
     return new Promise((resolve) => {
-    if(books[isbn]) {
+   
 
       // udpate review if user already reviewed the book
       if(books[isbn].reviews[username]) {
@@ -22,7 +22,7 @@ const reviewService = {
       books[isbn].reviews[username] = {
         ...books[isbn].reviews[username], review: review
       }
-      console.log("update review",books);
+      console.log("update review",books[isbn]);
       resolve({message: "Review updated successfully"});
       }
 
@@ -32,7 +32,7 @@ const reviewService = {
       };
       console.log("add new review", books[isbn]);
       resolve({message: "Review added successfully"});
-    }
+    
     });
   },
 
@@ -56,6 +56,21 @@ const reviewService = {
       else {
         reject({message: "Book not found"});
       }
+    });
+  },
+
+  deleteReview: async(isbn, username) => {
+    return new Promise((resolve, reject) => {
+      
+        if(books[isbn].reviews[username]) {
+          delete books[isbn].reviews[username];
+          console.log("delete review", books[isbn]);
+          resolve({message: "Review deleted successfully"});
+        }
+        else {
+          reject({message: "Review not found"});
+        }
+      
     });
   }
 }
@@ -160,6 +175,53 @@ regd_users.put("/auth/review/:isbn",
     return res.status(400).json({message: error.message});
   }
 });
+
+// Delete a book review
+regd_users.delete("/auth/review/:isbn",
+  param("isbn")
+  .notEmpty()
+  .escape(),
+  [
+    body("username")
+    .isString()
+    .withMessage("Name must be a string")
+    .isLength({min: 3})
+    .withMessage("Name must be at least 3 characters long")
+    .trim()
+    .notEmpty()
+    .escape()
+  ],
+  async(req, res) => {
+  
+  const errors = validationResult(req);
+
+  if(!errors.isEmpty()) {
+    return res.status(422).json({message: errors.array()});
+  }
+
+  const data = matchedData(req);
+  const {isbn, username} = data;
+
+  try {
+    
+    const foundUser = await reviewService.findUser(username);
+    if(!foundUser) {
+      return res.status(400).json({message: "User not found"});
+    }
+
+    const book = await reviewService.findBook(isbn);
+    if(!book) {
+      return res.status(400).json({message: "Book not found"});
+    }
+
+    const result = await reviewService.deleteReview(isbn, username);
+    return res.status(200).json(result);
+
+  } catch (error) {
+    return res.status(400).json({message: error.message});
+  }
+});
+
 
 module.exports.authenticated = regd_users;
 module.exports.users = users;
