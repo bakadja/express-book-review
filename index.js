@@ -39,7 +39,7 @@ app.use("/customer/auth/*", (req,res,next) => {
      }
 });
  
-const PORT =5500;
+const PORT =5600;
 
 app.use("/customer", customer_routes);
 app.use("/", genl_routes);
