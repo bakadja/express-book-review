@@ -3,7 +3,7 @@ let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
-const { param, matchedData, validationResult } = require('express-validator');
+const { param, validationResult } = require('express-validator');
 
 
 public_users.post("/register", (req,res) => {
@@ -103,7 +103,7 @@ public_users.get('/review/:isbn',
     
     if (books[isbn]?.reviews) {
       return res.status(200).json(books[isbn].reviews);
-      
+
     } else if (books[isbn]) {
       return res.status(404).json({ message: "No reviews found" });
     } else {
