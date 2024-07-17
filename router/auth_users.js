@@ -2,7 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 let books = require("./booksdb.js");
 const regd_users = express.Router();
-const { body,matchedData ,validationResult } = require("express-validator");
+const { body,param,matchedData ,validationResult } = require("express-validator");
 
 
 let users = [];
@@ -59,9 +59,76 @@ regd_users.post("/login",
 });
 
 // Add a book review
-regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+regd_users.put("/auth/review/:isbn",
+  param("isbn")
+  .notEmpty()
+  .escape(),
+  [
+    
+    body("username")
+    .isString()
+    .withMessage("Name must be a string")
+    .isLength({min: 3})
+    .withMessage("Name must be at least 3 characters long")
+    .trim()
+    .notEmpty()
+    .escape(),
+    body("review")
+    .isString()
+    .withMessage("Review must be a string")
+    .isLength({min: 3})
+    .withMessage("Review must be at least 3 characters long")
+    .trim() 
+    .notEmpty()
+    .escape()
+  ], 
+  (req, res) => {
+  
+  const errors = validationResult(req);
+
+  if(!errors.isEmpty()) {
+    return res.status(422).json({message: errors.array()});
+  }
+  // const isbn = req.params.isbn;
+  const data = matchedData(req);
+  console.log("data",data);
+
+  const {isbn, username, review} = data;
+
+  const foundUser = users.find(user => user.username === username);
+
+  if(!foundUser) {
+    return res.status(400).json({message: "User not found"});
+  }
+  console.log("foundUser",foundUser);
+  console.log("review",books[isbn].reviews[username]);
+
+  if(books[isbn] && foundUser.username) {
+    if(books[isbn].reviews[foundUser.username]) {
+      
+    books[isbn].reviews[username] = {
+      ...books[isbn].reviews[username], review: review
+    }
+    console.log("Review updated")  
+    console.log("test",books[isbn].reviews[username]);
+
+    return res.status(200).json({message: "Review updated successfully"});
+      // return res.status(400).json({message: "User already reviewed this book"});
+    }
+    books[isbn].reviews = {
+      ...books[isbn].reviews, [username]: {review: review}
+    };
+  console.log("add review", books[isbn].reviews);
+  console.log("review",books[isbn]);
+    
+    return res.status(200).json({message: "Review added successfully"});
+
+  }
+  else
+  {
+    return res.status(404).json({message: "Book not found"});
+  }
+
 });
 
 module.exports.authenticated = regd_users;
