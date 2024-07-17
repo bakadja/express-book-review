@@ -42,7 +42,7 @@ public_users.get('/isbn/:isbn',
 public_users.get('/author/:author',
   param('author').notEmpty().escape() ,
   (req, res) => {
-    
+
   const errors = validationResult(req);
 
   if (errors.isEmpty()) {
@@ -66,9 +66,29 @@ public_users.get('/author/:author',
 });
 
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+public_users.get('/title/:title',
+  param('title').notEmpty().escape(),
+  (req, res) => {
+  
+  const errors = validationResult(req);
+
+  if (errors.isEmpty()) {
+    const title = req.params.title;
+    const bookList = {};
+    
+    for( const [key, value] of Object.entries(books)){
+      if (value.title === title){
+        bookList[key] = value;
+      }
+    }
+
+    if (Object.keys(bookList).length > 0) {
+      return res.status(200).json(bookList);
+    } else {
+      return res.status(404).json({message: "Title not found"});
+    }
+  }
+  return res.status(422).json({message: errors.array()});
 });
 
 //  Get book review
