@@ -11,6 +11,54 @@ const authenticatedUser = (username,password)=>{
     return users.find(user => user.username === username && user.password === password) ;
 }
 
+const reviewService = {
+  addOrUpdateReview: async(isbn, username, review) => {
+    return new Promise((resolve) => {
+    if(books[isbn]) {
+
+      // udpate review if user already reviewed the book
+      if(books[isbn].reviews[username]) {
+        
+      books[isbn].reviews[username] = {
+        ...books[isbn].reviews[username], review: review
+      }
+      console.log("update review",books);
+      resolve({message: "Review updated successfully"});
+      }
+
+      // add new review if user has not reviewed the book
+      books[isbn].reviews = {
+        ...books[isbn].reviews, [username]: {review: review}
+      };
+      console.log("add new review", books[isbn]);
+      resolve({message: "Review added successfully"});
+    }
+    });
+  },
+
+  findUser: async(username) => {
+    return new Promise((resolve, reject) => {
+      const foundUser = users.find(user => user.username === username);
+      if(foundUser) {
+        resolve(foundUser);
+      }
+      else {
+        reject({message: "User not found"});
+      }
+    });
+  },
+
+  findBook: async(isbn) => {
+    return new Promise((resolve, reject) => {
+      if(books[isbn]) {
+        resolve(books[isbn]);
+      }
+      else {
+        reject({message: "Book not found"});
+      }
+    });
+  }
+}
 
 
 //only registered users can login
@@ -82,53 +130,35 @@ regd_users.put("/auth/review/:isbn",
     .notEmpty()
     .escape()
   ], 
-  (req, res) => {
+  async(req, res) => {
   
   const errors = validationResult(req);
 
   if(!errors.isEmpty()) {
     return res.status(422).json({message: errors.array()});
   }
-  // const isbn = req.params.isbn;
+
   const data = matchedData(req);
-  console.log("data",data);
-
   const {isbn, username, review} = data;
-
-  const foundUser = users.find(user => user.username === username);
-
-  if(!foundUser) {
-    return res.status(400).json({message: "User not found"});
-  }
-  console.log("foundUser",foundUser);
-  console.log("review",books[isbn].reviews[username]);
-
-  if(books[isbn] && foundUser.username) {
-    if(books[isbn].reviews[foundUser.username]) {
-      
-    books[isbn].reviews[username] = {
-      ...books[isbn].reviews[username], review: review
-    }
-    console.log("Review updated")  
-    console.log("test",books[isbn].reviews[username]);
-
-    return res.status(200).json({message: "Review updated successfully"});
-      // return res.status(400).json({message: "User already reviewed this book"});
-    }
-    books[isbn].reviews = {
-      ...books[isbn].reviews, [username]: {review: review}
-    };
-  console.log("add review", books[isbn].reviews);
-  console.log("review",books[isbn]);
+  
+  try {
     
-    return res.status(200).json({message: "Review added successfully"});
+    const foundUser = await reviewService.findUser(username);
+    if(!foundUser) {
+      return res.status(400).json({message: "User not found"});
+    }
 
-  }
-  else
-  {
-    return res.status(404).json({message: "Book not found"});
-  }
+    const book = await reviewService.findBook(isbn);
+    if(!book) {
+      return res.status(400).json({message: "Book not found"});
+    }
 
+    const result = await reviewService.addOrUpdateReview(isbn, username, review);
+    return res.status(200).json(result);
+
+  } catch (error) {
+    return res.status(400).json({message: error.message});
+  }
 });
 
 module.exports.authenticated = regd_users;
