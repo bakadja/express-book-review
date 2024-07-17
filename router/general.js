@@ -6,6 +6,8 @@ const public_users = express.Router();
 const { body,matchedData ,param, validationResult } = require('express-validator');
 const authenticatedUser = require("./auth_users.js").authenticatedUser;
 
+const axios = require('axios').default;
+
 const getBookByValue = (filter,value) => {
   return new Promise((resolve, reject) => {
 
@@ -64,9 +66,15 @@ public_users.post("/register",
 
 
 // Get the book list available in the shop
-public_users.get('/', (req, res) => {
+public_users.get('/', async(req, res) => {
+  try {
+    const { data } = await axios.get("http://localhost:3000/booksdb.json");
+    res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({message: "Internal server error"});
+  }
 
-  return Promise.resolve(books).then(books =>  res.status(200).json(books));
+  return res.status(200).json(data);
 });
 
 // Get book details based on ISBN
