@@ -6,12 +6,13 @@ const public_users = express.Router();
 const { body,matchedData ,param, validationResult } = require('express-validator');
 const authenticatedUser = require("./auth_users.js").authenticatedUser;
 
-const getBookByValue = (value) =>
-  new Promise((resolve, reject) => {
+const getBookByValue = (filter,value) => {
+  return new Promise((resolve, reject) => {
+
     const bookList = {};
     for (const [key, book] of Object.entries(books)) {
-      if (book[value] === value) {
-        bookList[key] = value;
+      if (book[filter] === value) {
+        bookList[key] = book;
       }
     }
 
@@ -21,6 +22,7 @@ const getBookByValue = (value) =>
       reject({ message: "Author not found" });
     }
   });
+}
 
 
 //register a user
@@ -74,18 +76,24 @@ public_users.get('/isbn/:isbn',
   
   const errors = validationResult(req);
 
-  if (errors.isEmpty()) {
-    const isbn = req.params.isbn;
-    
-    if (books[isbn]) {
-      
-      return res.status(200).json(books[isbn]);
-    } else {
-
-      return res.status(404).json({message: "Book not found"});
-    }
+  if(!errors.isEmpty()) {
+    return res.status(422).json({message: errors.array()});
   }
-  return res.status(422).json({message: errors.array()});
+  const isbn = req.params.isbn;
+
+  new Promise((resolve, reject) => {
+      if (books[isbn]) {
+        resolve(books[isbn]);
+      } else {
+        reject({ message: "Book not found" });
+      }
+    })
+    .then((book) => {
+      return res.status(200).json(book);
+    })
+    .catch((error) => {
+      return res.status(404).json(error);
+    })
  });
   
 // Get book details based on author
@@ -101,7 +109,7 @@ public_users.get('/author/:author',
 
   const author = req.params.author;
   try {
-    const bookList = await getBookByValue(author);
+    const bookList = await getBookByValue('author',author);
     return res.status(200).json(bookList);
   }
   catch (error) {
@@ -122,7 +130,7 @@ public_users.get('/title/:title',
 
   const title = req.params.title;
   try {
-    const bookList = await getBookByValue(title);
+    const bookList = await getBookByValue('title',title);
     return res.status(200).json(bookList);
   }
   catch (error) {
