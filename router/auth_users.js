@@ -2,7 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 let books = require("./booksdb.js");
 const regd_users = express.Router();
-const { body,param,matchedData ,validationResult } = require("express-validator");
+const { body,param,matchedData ,validationResult, query } = require("express-validator");
 
 
 let users = [];
@@ -23,7 +23,9 @@ const reviewService = {
         ...books[isbn].reviews[username], review: review
       }
       console.log("update review",books[isbn]);
-      resolve({message: "Review updated successfully"});
+      resolve({
+        message: `The review for the book with the ISBN ${isbn} has been successfully updated`,
+      });
       }
 
       // add new review if user has not reviewed the book
@@ -31,7 +33,9 @@ const reviewService = {
         ...books[isbn].reviews, [username]: {review: review}
       };
       console.log("add new review", books[isbn]);
-      resolve({message: "Review added successfully"});
+      resolve({
+        message: `The review for the book with the ISBN ${isbn} has been successfully added/updated`,
+      });
     
     });
   },
@@ -65,7 +69,7 @@ const reviewService = {
         if(books[isbn].reviews[username]) {
           delete books[isbn].reviews[username];
           console.log("delete review", books[isbn]);
-          resolve({message: "Review deleted successfully"});
+          resolve({message: `Reviews for the ISBN ${isbn} posted by the user ${username}  deleted.`});
         }
         else {
           reject({message: "Review not found"});
@@ -126,8 +130,9 @@ regd_users.put("/auth/review/:isbn",
   param("isbn")
   .notEmpty()
   .escape(),
-  [
-    
+  query("review")
+  .notEmpty()
+  .escape(),
     body("username")
     .isString()
     .withMessage("Name must be a string")
@@ -135,25 +140,19 @@ regd_users.put("/auth/review/:isbn",
     .withMessage("Name must be at least 3 characters long")
     .trim()
     .notEmpty()
-    .escape(),
-    body("review")
-    .isString()
-    .withMessage("Review must be a string")
-    .isLength({min: 3})
-    .withMessage("Review must be at least 3 characters long")
-    .trim() 
-    .notEmpty()
     .escape()
-  ], 
+  , 
   async(req, res) => {
   
   const errors = validationResult(req);
-
+  
   if(!errors.isEmpty()) {
     return res.status(422).json({message: errors.array()});
   }
 
   const data = matchedData(req);
+  console.log("data",data);
+  
   const {isbn, username, review} = data;
   
   try {
