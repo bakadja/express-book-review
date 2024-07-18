@@ -4,6 +4,7 @@ let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
 const { body,matchedData ,param, validationResult } = require('express-validator');
+const e = require('express');
 const authenticatedUser = require("./auth_users.js").authenticatedUser;
 
 const axios = require('axios').default;
@@ -21,7 +22,7 @@ const getBookByValue = (filter,value) => {
     if (Object.keys(bookList).length > 0) {
       resolve(bookList);
     } else {
-      reject({ message: "Author not found" });
+      reject({ message: `${filter} not found` });
     }
   });
 }
@@ -119,7 +120,7 @@ public_users.get('/author/:author',
     return res.status(200).json(bookList);
   }
   catch (error) {
-    return res.status(404).json({message: "Author not found"});
+    return res.status(404).json({message: error.message});
   }
   
 });
@@ -140,7 +141,7 @@ public_users.get('/title/:title',
     return res.status(200).json(bookList);
   }
   catch (error) {
-    return res.status(404).json({message: "Title not found"});
+    return res.status(404).json({message: error.message});
   }
 });
 
