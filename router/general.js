@@ -19,7 +19,7 @@ const getBookByValue = (filter,value) => {
       }
     }
 
-    if (Object.keys(bookList).length > 0) {
+    if (bookList.length > 0) {
       const bookByFilter = {
         [`booksby${filter}`]: bookList
       }
