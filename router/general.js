@@ -73,8 +73,6 @@ public_users.get('/', async(req, res) => {
   } catch (error) {
     return res.status(500).json({message: "Internal server error"});
   }
-
-  return res.status(200).json(data);
 });
 
 // Get book details based on ISBN
