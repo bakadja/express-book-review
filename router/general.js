@@ -12,21 +12,23 @@ const axios = require('axios').default;
 const getBookByValue = (filter,value) => {
   return new Promise((resolve, reject) => {
 
-    const bookList = {};
-    for (const [key, book] of Object.entries(books)) {
+    const bookList = [];
+    for (const  book of Object.values(books)) {
       if (book[filter] === value) {
-        bookList[key] = book;
+        bookList.push(book);
       }
     }
 
     if (Object.keys(bookList).length > 0) {
-      resolve(bookList);
+      const bookByFilter = {
+        [`booksby${filter}`]: bookList
+      }
+      resolve(bookByFilter);
     } else {
       reject({ message: `${filter} not found` });
     }
   });
 }
-
 
 //register a user
 public_users.post("/register",
